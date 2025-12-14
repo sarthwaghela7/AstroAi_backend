@@ -12,7 +12,7 @@ API_URL = "https://api.groq.com/openai/v1/chat/completions"
 _sessions = defaultdict(lambda: deque(maxlen=100))
 
 HEADERS = {
-    "Authorization": f"Bearer {GROQJYO}",
+    "Authorization": f"Bearer {GROQ}",
     "Content-Type": "application/json"
 }
 
