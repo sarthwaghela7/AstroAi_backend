@@ -2,9 +2,10 @@ import os
 import json
 import requests
 from collections import defaultdict, deque
-from keys import GROQ
+import os
 
-GROQJYO = GROQ
+GROQ = os.getenv("GROQ")
+
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Session memory: last 5 messages per user
