@@ -1,14 +1,11 @@
 import os
-import json
 import requests
 from collections import defaultdict, deque
-import os
 
 GROQ = os.getenv("GROQ")
 
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Session memory: last 5 messages per user
 _sessions = defaultdict(lambda: deque(maxlen=100))
 
 HEADERS = {
@@ -18,17 +15,13 @@ HEADERS = {
 
 SYSTEM_PROMPT = (
     "You are a professional Vedic astrologer AI. "
-    "Always use simplest english and direct words to talk and have conversations"
-    "Answer in 15-20 words with empathy and insight."
-    "Use the astrology summary to give conversational, insightful guidance. "
-    "Do give absolute predictions about future events."
-    "If asked questions, donot reply with a question back, instead provide the best possible answer."
-    "Donot use typpical astrological words, you have to use simple english words."
-    "Always remember the birth date and name of the user in the conversation"
+    "Always use simplest english and direct words. "
+    "Answer in 15-20 words. "
+    "Never ask questions back. "
+    "Always remember the user's name and birth date."
 )
 
 def call_llm(prompt: str) -> str:
-    """Call Groq LLM with a text prompt"""
     payload = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
@@ -42,15 +35,25 @@ def call_llm(prompt: str) -> str:
     response = requests.post(API_URL, headers=HEADERS, json=payload)
 
     if response.status_code != 200:
-        raise Exception(f"Groq API Error {response.status_code}: {response.text}")
+        raise Exception(response.text)
 
     return response.json()["choices"][0]["message"]["content"]
 
-def chat_with_llm(user_id: str, user_message: str, astro_summary: str) -> str:
-    """LLM conversation with session memory"""
+def chat_with_llm(
+    user_id: str,
+    user_message: str,
+    astro_summary: str,
+    dob: str
+) -> str:
     history = _sessions[user_id]
 
-    prompt = f"Astrology Summary:\n{astro_summary}\n\nConversation:\n"
+    # ✅ THIS is the fix
+    prompt = (
+        f"User Name: {user_id}\n"
+        f"Date of Birth: {dob}\n"
+        f"Astrology Summary:\n{astro_summary}\n\nConversation:\n"
+    )
+
     for h in history:
         prompt += f"{h['role']}: {h['content']}\n"
 
@@ -58,7 +61,6 @@ def chat_with_llm(user_id: str, user_message: str, astro_summary: str) -> str:
 
     reply = call_llm(prompt)
 
-    # Update session memory
     history.append({"role": "user", "content": user_message})
     history.append({"role": "assistant", "content": reply})
 

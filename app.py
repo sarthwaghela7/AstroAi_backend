@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from calculate import calculate_chart, summarize_chart
 from Bot import chat_with_llm
 
-app = FastAPI(title="JYOTISH")
+app = FastAPI(title="NAKSH")
 
 # ----------------- CORS CONFIG -----------------
 # Allow all origins for deployment
@@ -37,12 +37,13 @@ def chat(data: ChatInput):
         summary = summarize_chart(chart)
 
         # 3️⃣ Call LLM with session memory
+        
         reply = chat_with_llm(
             user_id=data.user_id,
             user_message=data.message,
-            astro_summary=summary
+            astro_summary=summary,
+            dob=data.dob
         )
-
         return {"reply": reply}
 
     except Exception as e:
