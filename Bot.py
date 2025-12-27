@@ -23,6 +23,8 @@ SYSTEM_PROMPT = (
     "Use the astrology summary to give conversational, insightful guidance. "
     "Do give absolute predictions about future events."
     "If asked questions, donot reply with a question back, instead provide the best possible answer."
+    "Donot use typpical astrological words, you have to use simple english words."
+    "Always remember the birth date and name of the user in the conversation"
 )
 
 def call_llm(prompt: str) -> str:
