@@ -32,12 +32,20 @@ def chat(data: ChatInput):
 
     summary = summarize_chart(chart)
 
+    user_details = {
+        "name": data.user_id,
+        "dob": data.dob,
+        "tob": data.tob,
+        "lat": data.lat,
+        "lon": data.lon,
+        "timezone": data.timezone
+    }
+
     reply = chat_with_llm(
-        session_id=data.profile_id,   # ✅ memory isolation
+        session_id=data.profile_id,   # memory isolation
         user_message=data.message,
         astro_summary=summary,
-        dob=data.dob,
-        name=data.user_id             # ✅ REAL name
+        user_details=user_details      # ✅ send full details
     )
 
     return {"reply": reply}
