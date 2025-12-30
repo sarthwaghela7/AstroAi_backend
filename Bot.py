@@ -2,7 +2,7 @@ import os
 import requests
 from collections import defaultdict, deque
 
-# API Configuration
+
 GROQ = os.environ.get("GROQ")
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
