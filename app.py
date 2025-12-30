@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 
-# Import updated functions
+# Import updated functions from your calculation files
 from calculate import calculate_chart, get_current_transit_chart, summarize_chart_with_transits
 from calculate_relationship import summarize_relationship
 
+# Import Naksh's chat functions
 from Bot import chat_with_llm
 from Bot_relationship import chat_relationship
 
@@ -20,7 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------- INPUT SCHEMAS ----------
+# ---------- 1. INPUT SCHEMAS (Defined first to avoid Pylance errors) ----------
 
 class ChatInput(BaseModel):
     user_id: str
@@ -33,41 +34,52 @@ class ChatInput(BaseModel):
     message: str
     current_user_time: Optional[str] = None 
 
-# Class ko pehle define karna zaroori hai
 class RelationshipInput(BaseModel):
     session_id: str
     message: str
     person_a: ChatInput
     person_b: ChatInput
 
-# ---------- SINGLE PERSON CHAT ----------
+# ---------- 2. SINGLE PERSON CHAT ENDPOINT ----------
 
 @app.post("/chat")
 def chat(data: ChatInput):
+    # Calculate Birth Chart (Natal)
     natal_chart = calculate_chart(
         data.lat, data.lon, data.dob, data.tob, data.timezone
     )
 
+    # Calculate Current Sky (Transit)
     transit_chart = get_current_transit_chart(
         data.lat, data.lon, data.timezone, data.current_user_time
     )
 
+    # Combine for Naksh
     full_summary = summarize_chart_with_transits(natal_chart, transit_chart)
 
-    # Naming synced with Bot.py
+    # Clean user details so Naksh knows who he's talking to
+    user_info = {
+        "name": data.user_id,
+        "dob": data.dob,
+        "tob": data.tob,
+        "timezone": data.timezone
+    }
+
+    # Calling Bot.py (Ensure full_astro_summary matches Bot.py argument name)
     reply = chat_with_llm(
         session_id=data.profile_id,
         user_message=data.message,
         full_astro_summary=full_summary,
-        user_details=data.dict()
+        user_details=user_info
     )
 
     return {"reply": reply}
 
-# ---------- RELATIONSHIP CHAT ----------
+# ---------- 3. RELATIONSHIP CHAT ENDPOINT ----------
 
 @app.post("/relationship")
 def relationship_chat(data: RelationshipInput):
+    # Calculate charts for both people
     chart_a = calculate_chart(
         data.person_a.lat, data.person_a.lon, data.person_a.dob, data.person_a.tob, data.person_a.timezone
     )
@@ -75,9 +87,11 @@ def relationship_chat(data: RelationshipInput):
         data.person_b.lat, data.person_b.lon, data.person_b.dob, data.person_b.tob, data.person_b.timezone
     )
 
+    # Generate compatibility summary
     rel_summary = summarize_relationship(chart_a, chart_b)
     
-    # Naming synced with Bot_relationship.py
+    # Calling Bot_relationship.py
+    # Note: Ensure arguments here match the first line of your chat_relationship function
     reply = chat_relationship(
         session_id=data.session_id,
         message=data.message,
@@ -88,6 +102,8 @@ def relationship_chat(data: RelationshipInput):
 
     return {"reply": reply}
 
+# ---------- 4. ROOT/HEALTH CHECK ----------
+
 @app.get("/")
 def root():
-    return {"message": "NAKSH Backend is live with Gochar and Relationship support"}
+    return {"message": "NAKSH Backend is live and synced!"}
